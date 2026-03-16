@@ -1,26 +1,41 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const buttons = document.querySelectorAll('.speed-btn');
+  const speedButtons = document.querySelectorAll('.option-btn[data-type="speed"]');
+  const qualityButtons = document.querySelectorAll('.option-btn[data-type="quality"]');
 
-  // Load current speed from session state, defaulting to 1.5
-  chrome.storage.session.get(['playbackSpeed'], (result) => {
+  // Load current states from session state
+  chrome.storage.session.get(['playbackSpeed', 'videoQuality'], (result) => {
     const currentSpeed = result.playbackSpeed || 1.5;
-    updateActiveButton(currentSpeed);
+    const currentQuality = result.videoQuality || 'hd720';
+    
+    updateActiveButton(speedButtons, currentSpeed);
+    updateActiveButton(qualityButtons, currentQuality);
   });
 
-  buttons.forEach(btn => {
+  // Handle speed button clicks
+  speedButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      const speed = parseFloat(btn.getAttribute('data-speed'));
-      
-      // Save the new speed to session storage
+      const speed = parseFloat(btn.getAttribute('data-value'));
       chrome.storage.session.set({ playbackSpeed: speed }, () => {
-        updateActiveButton(speed);
+        updateActiveButton(speedButtons, speed);
       });
     });
   });
 
-  function updateActiveButton(speed) {
+  // Handle quality button clicks
+  qualityButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const quality = btn.getAttribute('data-value');
+      chrome.storage.session.set({ videoQuality: quality }, () => {
+        updateActiveButton(qualityButtons, quality);
+      });
+    });
+  });
+
+  function updateActiveButton(buttons, activeValue) {
     buttons.forEach(btn => {
-      if (parseFloat(btn.getAttribute('data-speed')) === speed) {
+      const btnValue = btn.getAttribute('data-value');
+      // Coerce comparison so numeric strings match numbers (for speed)
+      if (btnValue == activeValue) {
         btn.classList.add('active');
       } else {
         btn.classList.remove('active');
