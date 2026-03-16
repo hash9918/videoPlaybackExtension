@@ -14,14 +14,24 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
       "all_frames": true
     }
   ],
   "action": {
+    "default_icon": "icon2.png",
     "default_popup": "popup.html",
     "default_title": "Set Video Speed"
+  },
+  "icons": {
+    "16": "icon2.png",
+    "48": "icon2.png",
+    "128": "icon2.png"
   }
 }
