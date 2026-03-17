@@ -5,6 +5,7 @@ const defaultSpeed = isMusicSite ? 1.0 : 1.5;
 const storageKey = `playbackSpeed_${hostname}`;
 
 let currentTargetSpeed = defaultSpeed;
+let currentTargetQuality = 'hd720';
 
 function enforceSpeed(video) {
   if (video.playbackRate !== currentTargetSpeed) {
@@ -12,7 +13,33 @@ function enforceSpeed(video) {
   }
 }
 
+// Function to inject YouTube specific quality logic
+function enforceYouTubeQuality() {
+  if (!window.location.hostname.includes("youtube.com")) return;
+  
+  // We must inject a script into the main page context to access the YouTube player API
+  const scriptContent = `
+    (function() {
+      const player = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
+      if (player && typeof player.setPlaybackQualityRange === 'function') {
+        player.setPlaybackQualityRange('${currentTargetQuality}');
+        // older players might use setPlaybackQuality
+        if (typeof player.setPlaybackQuality === 'function') {
+           player.setPlaybackQuality('${currentTargetQuality}');
+        }
+      }
+    })();
+  `;
+
+  const scriptElement = document.createElement('script');
+  scriptElement.textContent = scriptContent;
+  (document.head || document.documentElement).appendChild(scriptElement);
+  scriptElement.remove(); // Clean up immediately after execution
+}
+
 function updateAllVideos() {
+  enforceYouTubeQuality();
+
   const videos = document.querySelectorAll('video');
   videos.forEach(video => {
     enforceSpeed(video);
@@ -34,16 +61,30 @@ function updateAllVideos() {
 // Function to initialize logic
 function init() {
   // Get initial speed from session storage
-  chrome.storage.session.get([storageKey], (result) => {
+  chrome.storage.session.get([storageKey, 'videoQuality'], (result) => {
     currentTargetSpeed = result[storageKey] || defaultSpeed;
+    currentTargetQuality = result.videoQuality || 'hd720';
     updateAllVideos();
   });
 
   // Listen for changes in session storage
   chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'session' && changes[storageKey]) {
-      currentTargetSpeed = changes[storageKey].newValue;
-      updateAllVideos();
+    if (namespace === 'session') {
+      let requiresUpdate = false;
+      
+      if (changes[storageKey]) {
+        currentTargetSpeed = changes[storageKey].newValue;
+        requiresUpdate = true;
+      }
+      
+      if (changes.videoQuality) {
+        currentTargetQuality = changes.videoQuality.newValue;
+        requiresUpdate = true;
+      }
+      
+      if (requiresUpdate) {
+          updateAllVideos();
+      }
     }
   });
 
