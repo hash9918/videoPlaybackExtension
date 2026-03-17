@@ -1,4 +1,10 @@
-let currentTargetSpeed = 1.5;
+const hostname = window.location.hostname;
+const musicSites = ['music.youtube.com', 'open.spotify.com', 'soundcloud.com', 'music.apple.com'];
+const isMusicSite = musicSites.some(site => hostname.includes(site));
+const defaultSpeed = isMusicSite ? 1.0 : 1.5;
+const storageKey = `playbackSpeed_${hostname}`;
+
+let currentTargetSpeed = defaultSpeed;
 
 function enforceSpeed(video) {
   if (video.playbackRate !== currentTargetSpeed) {
@@ -27,16 +33,16 @@ function updateAllVideos() {
 
 // Function to initialize logic
 function init() {
-  // Get initial speed from session storage, defaulting to 1.5
-  chrome.storage.session.get(['playbackSpeed'], (result) => {
-    currentTargetSpeed = result.playbackSpeed || 1.5;
+  // Get initial speed from session storage
+  chrome.storage.session.get([storageKey], (result) => {
+    currentTargetSpeed = result[storageKey] || defaultSpeed;
     updateAllVideos();
   });
 
   // Listen for changes in session storage
   chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'session' && changes.playbackSpeed) {
-      currentTargetSpeed = changes.playbackSpeed.newValue;
+    if (namespace === 'session' && changes[storageKey]) {
+      currentTargetSpeed = changes[storageKey].newValue;
       updateAllVideos();
     }
   });
