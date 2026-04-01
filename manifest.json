@@ -24,6 +24,12 @@
       "all_frames": true
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["youtube-quality.js"],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ],
   "action": {
     "default_icon": "icon2.png",
     "default_popup": "popup.html",

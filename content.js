@@ -10,31 +10,27 @@ let currentTargetQuality = 'hd720';
 function enforceSpeed(video) {
   if (video.playbackRate !== currentTargetSpeed) {
     video.playbackRate = currentTargetSpeed;
+    if (window.location.hostname.includes('youtube.com')) {
+      window.dispatchEvent(new CustomEvent('SetYouTubeSpeed', { detail: currentTargetSpeed }));
+    }
   }
 }
 
-// Function to inject YouTube specific quality logic
-function enforceYouTubeQuality() {
-  if (!window.location.hostname.includes("youtube.com")) return;
-  
-  // We must inject a script into the main page context to access the YouTube player API
-  const scriptContent = `
-    (function() {
-      const player = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
-      if (player && typeof player.setPlaybackQualityRange === 'function') {
-        player.setPlaybackQualityRange('${currentTargetQuality}');
-        // older players might use setPlaybackQuality
-        if (typeof player.setPlaybackQuality === 'function') {
-           player.setPlaybackQuality('${currentTargetQuality}');
-        }
-      }
-    })();
-  `;
+// Inject the player API script into the main world
+if (window.location.hostname.includes("youtube.com")) {
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('youtube-quality.js');
+  script.onload = function() {
+    this.remove();
+  };
+  (document.head || document.documentElement).appendChild(script);
+}
 
-  const scriptElement = document.createElement('script');
-  scriptElement.textContent = scriptContent;
-  (document.head || document.documentElement).appendChild(scriptElement);
-  scriptElement.remove(); // Clean up immediately after execution
+// Function to invoke YouTube specific quality logic
+function enforceYouTubeQuality() {
+  if (!window.location.hostname.includes('youtube.com')) return;
+  // Dispatch an event to be picked up by our main world script
+  window.dispatchEvent(new CustomEvent('SetYouTubeQuality', { detail: currentTargetQuality }));
 }
 
 function updateAllVideos() {
