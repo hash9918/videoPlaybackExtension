@@ -20,7 +20,7 @@ function enforceSpeed(video) {
 if (window.location.hostname.includes("youtube.com")) {
   const script = document.createElement('script');
   script.src = chrome.runtime.getURL('youtube-quality.js');
-  script.onload = function() {
+  script.onload = function () {
     this.remove();
   };
   (document.head || document.documentElement).appendChild(script);
@@ -39,11 +39,11 @@ function updateAllVideos() {
   const videos = document.querySelectorAll('video');
   videos.forEach(video => {
     enforceSpeed(video);
-    
+
     // Attach listeners if not already attached
     if (!video.dataset.speedControllerAttached) {
       video.dataset.speedControllerAttached = 'true';
-      
+
       // Re-enforce speed on common media events where SPAs like YouTube might reset it
       video.addEventListener('loadeddata', () => enforceSpeed(video));
       video.addEventListener('loadedmetadata', () => enforceSpeed(video));
@@ -67,19 +67,19 @@ function init() {
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'session') {
       let requiresUpdate = false;
-      
+
       if (changes[storageKey]) {
         currentTargetSpeed = changes[storageKey].newValue;
         requiresUpdate = true;
       }
-      
+
       if (changes.videoQuality) {
         currentTargetQuality = changes.videoQuality.newValue;
         requiresUpdate = true;
       }
-      
+
       if (requiresUpdate) {
-          updateAllVideos();
+        updateAllVideos();
       }
     }
   });
@@ -97,7 +97,7 @@ function init() {
       observer.observe(document.body, { childList: true, subtree: true });
     });
   }
-  
+
   // Fallback for stubborn SPAs like YouTube navigating between videos
   setInterval(updateAllVideos, 1000);
 }

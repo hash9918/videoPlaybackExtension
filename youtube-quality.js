@@ -1,5 +1,5 @@
 window.addEventListener('SetYouTubeQuality', (e) => {
-  const quality = e.detail;
+  const quality = e.detail === 'hd2160' ? 'highres' : e.detail;
   const player = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
   if (player) {
     if (typeof player.setPlaybackQualityRange === 'function') {
